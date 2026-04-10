@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Mighty Teck LLC | Digital Empires</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Plus+Jakarta+Sans:wght@200;400;600;800&display=swap');
+        
+        :root {
+            --diamond: #e0f2fe;
+            --platinum: #e5e7eb;
+            --gold: #d4af37;
+            --emerald: #10b981;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #000;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .heading-font { font-family: 'Syncopate', sans-serif; }
+
+        /* Cinematic Overlays */
+        #global-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #cursor-glow {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: screen;
+            filter: blur(60px);
+        }
+
+        /* Scroll Engine */
+        #intro-trigger { height: 200vh; position: relative; z-index: 5; }
+        .scroll-content-wrapper { position: relative; z-index: 10; }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 8rem 1rem;
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        section.visible { opacity: 1; transform: translateY(0); }
+
+        #globe-branding {
+            position: fixed;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+            width: 90%;
+        }
+
+        /* Cards & Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px);
+            border-radius: 2rem;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-8px);
+        }
+
+        /* 3D Glow Buttons */
+        .btn-glow {
+            display: inline-block;
+            padding: 1.2rem 2.5rem;
+            border-radius: 9999px;
+            font-weight: 800;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px currentColor;
+            border-color: currentColor;
+        }
+
+        .btn-diamond { color: var(--diamond); }
+        .btn-gold { color: var(--gold); }
+        .btn-platinum { color: var(--platinum); }
+
+        /* Typography */
+        .text-huge { font-size: clamp(2.5rem, 9vw, 6.5rem); line-height: 0.85; letter-spacing: -0.05em; }
+        .text-gold { color: var(--gold); }
+        
+        .caption-tag {
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .caption-tag::before { content: ''; width: 25px; height: 1px; background: currentColor; }
+
+        .powerful-caption {
+            font-size: clamp(1.4rem, 3.5vw, 2.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        #scroll-hint {
+            position: fixed;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            font-size: 8px;
+            letter-spacing: 1em;
+            text-transform: uppercase;
+            color: var(--gold);
+            text-align: center;
+        }
+        
+        .hero-power-caption {
+            font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+            color: var(--gold);
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-top: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="global-canvas"></canvas>
+    <div id="cursor-glow"></div>
+
+    <div id="globe-branding" class="opacity-0">
+        <h2 class="heading-font text-xl md:text-2xl font-bold tracking-[1.5em] text-white/40 mb-2">MIGHTY</h2>
+        <h1 class="heading-font text-4xl md:text-7xl font-black tracking-[0.5em] text-gold">TECK</h1>
+        <p class="heading-font text-[8px] md:text-[11px] tracking-[0.9em] text-white/70 mt-6 uppercase">Engineering Global Digital Supremacy</p>
+    </div>
+
+    <div id="scroll-hint">
+        <div class="w-10 h-[1px] bg-gold/30 mx-auto overflow-hidden">
+            <div class="w-full h-full bg-gold animate-pulse"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="main-nav" class="fixed top-0 w-full z-50 border-b border-white/5 bg-black/40 backdrop-blur-2xl opacity-0 translate-y-[-100%] transition-all duration-1000">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+            <div class="heading-font text-[10px] font-bold tracking-tighter text-gold">MIGHTY TECK <span class="text-white/20 ml-1">LLC</span></div>
+            <div class="hidden md:flex gap-10">
+                <a href="#services" class="text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-gold transition-colors">Logistics</a>
+                <a href="#performance" class="text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-gold transition-colors">Performance</a>
+                <a href="#pricing" class="text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-gold transition-colors">Capital</a>
+                <a href="#about" class="text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-gold transition-colors">Director</a>
+            </div>
+            <a href="mailto:sanjaykathulamusic@gmail.com" class="btn-glow btn-platinum px-6 py-3">Connect</a>
+        </div>
+    </nav>
+
+    <div id="intro-trigger"></div>
+
+    <div class="scroll-content-wrapper">
+        
+        <!-- HERO -->
+        <section id="home" class="content-section">
+            <div class="max-w-7xl mx-auto px-6 w-full">
+                <span class="caption-tag text-diamond">Global Strategy Entity</span>
+                <h1 class="heading-font text-huge font-extrabold mb-6">
+                    DOMINATE<br>
+                    <span class="text-gold">THE DIGITAL</span><br>
+                    <span class="text-white">ECONOMY</span>
+                </h1>
+                
+                <div class="hero-power-caption mb-12">Where technological precision meets institutional growth.</div>
+                
+                <p class="text-xl md:text-2xl font-light text-white/60 mb-12 max-w-3xl leading-snug italic border-l-2 border-gold pl-10">
+                    "We don't just build websites; we engineer <span class="text-white font-bold">digital empires</span> for the global elite. Deploying high-yield digital assets across all borders."
+                </p>
+                <div class="flex flex-wrap gap-6">
+                    <a href="mailto:sanjaykathulamusic@gmail.com" class="btn-glow btn-gold">Secure Your Territory</a>
+                    <a href="tel:6032330590" class="btn-glow btn-platinum">603-233-0590</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- SERVICES -->
+        <section id="services" class="content-section">
+            <div class="max-w-7xl mx-auto px-6 w-full">
+                <div class="grid lg:grid-cols-2 gap-20 items-center">
+                    <div>
+                        <span class="caption-tag text-platinum">Engineering Excellence</span>
+                        <h2 class="powerful-caption">WE DON'T JUST BUILD WEBSITES; WE ENGINEER <span class="text-platinum">UNSTOPPABLE MARKET ENGINES.</span></h2>
+                        <p class="text-gray-400 text-lg leading-relaxed mb-10">
+                            Legacy infrastructure is the enemy of growth. We strip away inefficiencies and replace them with high-performance digital engines calibrated for speed and global scale.
+                        </p>
+                        <div class="grid grid-cols-2 gap-8 mb-10">
+                            <div class="border-t border-white/10 pt-4">
+                                <h4 class="text-white font-bold text-lg mb-1">Web Logistics</h4>
+                                <p class="text-[9px] text-gray-500 uppercase tracking-widest">React & Angular Expert</p>
+                            </div>
+                            <div class="border-t border-white/10 pt-4">
+                                <h4 class="text-white font-bold text-lg mb-1">UI Systems</h4>
+                                <p class="text-[9px] text-gray-500 uppercase tracking-widest">Cinematic Interaction</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-10 border-platinum/20">
+                         <h4 class="text-platinum font-black text-xs uppercase mb-4 tracking-widest">The Work:</h4>
+                         <p class="text-white/60 text-sm leading-relaxed mb-8">Our portfolio consists of high-traffic infrastructures that maintain 99.9% uptime while delivering 40% faster load speeds.</p>
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="zap" class="text-platinum w-5 h-5"></i>
+                            <span class="text-[9px] font-bold tracking-[0.3em] uppercase">Engineered for Velocity</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRICING -->
+        <section id="pricing" class="content-section">
+            <div class="max-w-7xl mx-auto px-6 w-full">
+                <div class="text-center mb-20">
+                    <span class="caption-tag text-diamond justify-center">Capital Allocation</span>
+                    <h2 class="powerful-caption mx-auto max-w-4xl">PREMIUM ASSETS FOR <span class="text-diamond">VISIONARY LEADERS.</span></h2>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="glass-card p-10 flex flex-col">
+                        <h3 class="heading-font text-[9px] font-bold mb-6 text-gray-500">FOUNDATION</h3>
+                        <div class="text-5xl font-bold mb-10 text-diamond">$500</div>
+                        <ul class="space-y-4 text-[9px] text-gray-400 mb-10 flex-grow uppercase tracking-widest">
+                            <li>&bull; Performance UI</li>
+                            <li>&bull; SEO Core</li>
+                            <li>&bull; 5 Pages</li>
+                        </ul>
+                        <a href="mailto:sanjaykathulamusic@gmail.com" class="btn-glow btn-diamond text-center">Inquire</a>
+                    </div>
+                    <div class="glass-card p-10 bg-white/[0.04] border-gold/30 scale-105 relative">
+                        <h3 class="heading-font text-[9px] font-bold mb-6 text-gold">SOVEREIGN EXPANSION</h3>
+                        <div class="text-5xl font-bold mb-10 text-gold">$700</div>
+                        <ul class="space-y-4 text-[9px] text-gray-200 mb-10 uppercase tracking-widest">
+                            <li>&bull; Full Eco-System</li>
+                            <li>&bull; Social Media Domination</li>
+                            <li>&bull; 10 Strategic Entities</li>
+                        </ul>
+                        <a href="mailto:sanjaykathulamusic@gmail.com" class="btn-glow btn-gold w-full text-center">Acquire</a>
+                    </div>
+                    <div class="glass-card p-10 flex flex-col">
+                        <h3 class="heading-font text-[9px] font-bold mb-6 text-gray-500">GLOBAL EMPIRE</h3>
+                        <div class="text-5xl font-bold mb-10 text-white">$1200</div>
+                        <ul class="space-y-4 text-[9px] text-gray-400 mb-10 flex-grow uppercase tracking-widest">
+                            <li>&bull; VIP Concierge</li>
+                            <li>&bull; Custom API</li>
+                            <li>&bull; Unlimited Scale</li>
+                        </ul>
+                        <a href="mailto:sanjaykathulamusic@gmail.com" class="btn-glow btn-platinum text-center">Secure</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MULTIDIMENSIONAL PERFORMANCE -->
+        <section id="performance" class="content-section">
+            <div class="max-w-7xl mx-auto px-6 w-full">
+                <div class="text-center mb-16">
+                    <span class="caption-tag text-emerald justify-center">Multidimensional Performance</span>
+                    <h2 class="powerful-caption mx-auto max-w-5xl">BEYOND CODE: WE MASTER THE PHYSICAL AND DIGITAL MEDIUMS.</h2>
+                    <p class="text-gray-500 uppercase tracking-widest text-[10px] max-w-2xl mx-auto">Capturing the essence of high-value brands through advanced visual engineering.</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Drone Photography</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"Ascend above the competition. We deliver high-altitude perspectives that showcase the true scale of your enterprise assets."</p>
+                    </div>
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Videography</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"Visual storytelling engineered to convert. We capture motion that moves the needle on your brand's market valuation."</p>
+                    </div>
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Video Editing</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"The art of precision. We refine raw data into cinematic narratives, ensuring every frame serves a strategic business purpose."</p>
+                    </div>
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Cinematography</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"Bespoke visual excellence. Lighting, composition, and direction designed to place your brand in the premium category."</p>
+                    </div>
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Quadcopter R&D</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"Technical engineering at its peak. Researching ArduPilot systems to redefine what's possible in autonomous flight."</p>
+                    </div>
+                    <div class="glass-card p-8 hover:bg-emerald/5 transition-colors">
+                        <h3 class="heading-font text-xs font-bold mb-4 text-emerald">Audio Production</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed uppercase tracking-tight">"Soundscapes that command attention. Precise audio engineering for commercials, podcasts, and corporate identity."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIRECTOR / GLOBAL VISION -->
+        <section id="about" class="content-section">
+            <div class="max-w-7xl mx-auto px-6 w-full">
+                <div class="grid lg:grid-cols-2 gap-20 items-center">
+                    <div class="glass-card p-12 text-center border-gold/30">
+                        <h3 class="heading-font text-2xl font-bold mb-4">SANJAY KATHULA</h3>
+                        <p class="text-gold font-black tracking-[0.4em] uppercase text-[10px] mb-6">Director & CEO</p>
+                        <p class="text-white text-[11px] font-bold uppercase tracking-widest mb-6">MS in Computer Science</p>
+                        <div class="flex justify-center gap-6 mb-8 text-gold">
+                            <i data-lucide="shield-check"></i>
+                            <i data-lucide="cpu"></i>
+                            <i data-lucide="globe"></i>
+                        </div>
+                        <a href="mailto:sanjaykathulamusic@gmail.com" class="text-white/40 text-[10px] uppercase tracking-widest block mb-2 hover:text-gold">sanjaykathulamusic@gmail.com</a>
+                        <a href="tel:6032330590" class="text-gold text-lg font-bold tracking-widest block">603-233-0590</a>
+                    </div>
+                    <div>
+                        <span class="caption-tag text-gold">GLOBAL VISION</span>
+                        <h2 class="powerful-caption">BRIDGING CONTINENTS THROUGH <span class="text-gold">HIGH-PERFORMANCE ENGINEERING.</span></h2>
+                        <p class="text-gray-400 text-lg leading-relaxed mb-8">
+                            From the financial hubs of the USA to the tech-driven markets of India, we lead expansion with scientific rigor. Our director-led approach ensures that your brand achieves global relevance through absolute technical dominance.
+                        </p>
+                        <div class="btn-glow btn-gold">Strategic Consultation</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-20 border-t border-white/5 relative z-10">
+            <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="heading-font text-[10px] font-bold text-gold tracking-[0.4em]">MIGHTY TECK</div>
+                <div class="flex gap-10 text-gray-600">
+                    <a href="mailto:sanjaykathulamusic@gmail.com"><i data-lucide="mail" class="w-4 h-4 hover:text-white cursor-pointer"></i></a>
+                    <a href="tel:6032330590"><i data-lucide="phone" class="w-4 h-4 hover:text-white cursor-pointer"></i></a>
+                </div>
+                <p class="text-[7px] tracking-[0.8em] text-gray-800 uppercase">USA &bull; INDIA &bull; GLOBAL EXPANSION &bull; 2024</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('global-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 4000);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const celestialGroup = new THREE.Group();
+        scene.add(celestialGroup);
+
+        // --- Earth ---
+        const globeGroup = new THREE.Group();
+        celestialGroup.add(globeGroup);
+        const globeGeo = new THREE.SphereGeometry(20, 128, 128);
+        const earthCanvas = document.createElement('canvas');
+        earthCanvas.width = 1024; earthCanvas.height = 512;
+        const ctx = earthCanvas.getContext('2d');
+        ctx.fillStyle = '#0a101f'; ctx.fillRect(0,0,1024,512);
+        ctx.fillStyle = '#10b981';
+        for(let i=0; i<40; i++){
+            ctx.beginPath();
+            ctx.ellipse(Math.random()*1024, Math.random()*512, Math.random()*180, Math.random()*120, Math.random()*Math.PI, 0, Math.PI*2);
+            ctx.fill();
+        }
+        const earthTex = new THREE.CanvasTexture(earthCanvas);
+        const globeMat = new THREE.MeshPhongMaterial({ map: earthTex, emissive: 0x051121, shininess: 15 });
+        const globe = new THREE.Mesh(globeGeo, globeMat);
+        globeGroup.add(globe);
+        const continentMat = new THREE.MeshBasicMaterial({ color: 0x34d399, wireframe: true, transparent: true, opacity: 0.2 });
+        const continentLayer = new THREE.Mesh(globeGeo, continentMat);
+        continentLayer.scale.set(1.02, 1.02, 1.02);
+        globeGroup.add(continentLayer);
+
+        // --- SUPER BRIGHT STARS ---
+        const starCount = 10000;
+        const starPos = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        for(let i=0; i < starCount; i++) {
+            starPos[i*3] = (Math.random() - 0.5) * 3500;
+            starPos[i*3+1] = (Math.random() - 0.5) * 3500;
+            starPos[i*3+2] = (Math.random() - 0.5) * 3500;
+            const b = 0.9 + Math.random() * 0.1;
+            starColors[i*3] = b; starColors[i*3+1] = b; starColors[i*3+2] = b;
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 1.8, vertexColors: true, transparent: true, opacity: 1.0, sizeAttenuation: true })));
+
+        // --- Massive Comets ---
+        const comets = [];
+        const cometGroup = new THREE.Group();
+        celestialGroup.add(cometGroup);
+        const createComet = (i) => {
+            const geo = new THREE.BufferGeometry();
+            const posArr = new Float32Array(3 * 60); 
+            geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+            const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: i%2===0?0x10b981:0x3b82f6, transparent: true, opacity: 1.0, linewidth: 5 }));
+            const state = { mesh: line, velocity: new THREE.Vector3(1 + Math.random(), (Math.random()-0.5)*0.1, 0), life: 0, maxLife: 1000+Math.random()*1000, pos: new THREE.Vector3(-1000-Math.random()*500, (Math.random()-0.5)*500, (Math.random()-0.5)*300) };
+            cometGroup.add(line); comets.push(state);
+        };
+        for(let i=0; i<40; i++) createComet(i);
+
+        const sunLight = new THREE.PointLight(0xffffff, 4);
+        sunLight.position.set(250, 150, 200);
+        scene.add(sunLight);
+        scene.add(new THREE.AmbientLight(0x404040, 1.0));
+
+        camera.position.z = 100;
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) - 0.5;
+            mouseY = (e.clientY / window.innerHeight) - 0.5;
+            gsap.to("#cursor-glow", { x: e.clientX, y: e.clientY, duration: 1.2 });
+        });
+
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.timeline({
+            scrollTrigger: { trigger: "#intro-trigger", start: "top top", end: "bottom center", scrub: 2.5, onUpdate: (self) => {
+                gsap.to("#scroll-hint", { opacity: self.progress > 0.1 ? 0 : 1 });
+                gsap.to("#globe-branding", { opacity: self.progress > 0.1 && self.progress < 0.9 ? 1 : 0, scale: 1 - self.progress * 0.45 });
+            }}
+        }).to(camera.position, { z: 10, ease: "power2.inOut" }).to("#main-nav", { opacity: 1, y: 0, duration: 1 }, 0.5);
+
+        document.querySelectorAll('.content-section').forEach(section => {
+            ScrollTrigger.create({ trigger: section, start: "top 80%", onEnter: () => section.classList.add('visible') });
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            globeGroup.rotation.y += 0.0015;
+            continentLayer.rotation.y += 0.002;
+            comets.forEach((c) => {
+                c.pos.add(c.velocity); c.life++;
+                const p = c.mesh.geometry.attributes.position.array;
+                for(let i = p.length-1; i >= 3; i--) p[i] = p[i-3];
+                p[0] = c.pos.x; p[1] = c.pos.y; p[2] = c.pos.z;
+                c.mesh.geometry.attributes.position.needsUpdate = true;
+                c.mesh.material.opacity = Math.sin((c.life/c.maxLife)*Math.PI);
+                if(c.life > c.maxLife || c.pos.x > 1000) {
+                    c.life = 0; c.pos.x = -1000-Math.random()*500;
+                }
+            });
+            camera.position.x += (mouseX * 20 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY * 20 - camera.position.y) * 0.02;
+            camera.lookAt(0,0,0);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => { animate(); lucide.createIcons(); };
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
